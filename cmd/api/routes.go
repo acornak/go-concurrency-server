@@ -9,8 +9,8 @@ import (
 )
 
 // define routes
-func (app *application) routes() http.Handler {
-	r := mux.NewRouter()
+func (app *application) routes() (r *mux.Router) {
+	r = mux.NewRouter()
 
 	// routes
 	r.HandleFunc("/v1/api/smart", app.SendRequestsHandler).
@@ -22,5 +22,5 @@ func (app *application) routes() http.Handler {
 		app.logger.Error("failed to serve http: ", zap.Error(err))
 	}
 
-	return r
+	return
 }
