@@ -70,7 +70,6 @@ func main() {
 		version: version,
 		timeout: timeout,
 	}
-
 	// serve application
 	if err := app.serve(); err != nil {
 		app.logger.Fatal("unable to start the application: ", err)

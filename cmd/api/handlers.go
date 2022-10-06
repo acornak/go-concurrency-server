@@ -17,7 +17,6 @@ func (app *application) Handle(w http.ResponseWriter, r *http.Request) {
 		app.logger.Error("failed to marshal json: ", zap.Error(err))
 		return
 	}
-
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(out)
 }
