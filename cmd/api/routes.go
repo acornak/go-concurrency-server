@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
 // define routes
@@ -14,6 +15,9 @@ func (app *application) routes() http.Handler {
 	// routes
 	r.HandleFunc("/v1/api/smart", app.Handle).Methods(http.MethodGet)
 
-	http.ListenAndServe(fmt.Sprintf(":%d", app.config.port), r)
+	if err := http.ListenAndServe(fmt.Sprintf(":%d", app.config.port), r); err != nil {
+		app.logger.Error("failed to serve http: ", zap.Error(err))
+	}
+
 	return r
 }

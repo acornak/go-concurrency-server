@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -42,7 +43,12 @@ func (app *application) serve() error {
 func main() {
 	// initialize zap logger
 	loggerInit, _ := zap.NewProduction()
-	defer loggerInit.Sync()
+	defer func() {
+		err := loggerInit.Sync()
+		if err != nil {
+			log.Fatal("failed to initialize zap logger: ", err)
+		}
+	}()
 	logger := loggerInit.Sugar()
 
 	// parse env variable `port`
@@ -70,8 +76,10 @@ func main() {
 		version: version,
 		timeout: timeout,
 	}
+
 	// serve application
 	if err := app.serve(); err != nil {
 		app.logger.Fatal("unable to start the application: ", err)
 	}
+
 }

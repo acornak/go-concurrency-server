@@ -16,5 +16,4 @@ OR
 
 ### Pre-commit config dependencies
 
-- go-critic https://github.com/go-critic/go-critic
--
+- golangci-lint https://golangci-lint.run/usage/install/#local-installation
