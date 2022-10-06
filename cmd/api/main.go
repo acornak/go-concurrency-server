@@ -13,6 +13,8 @@ import (
 
 const version = "1.0.0"
 
+var logger = zap.NewExample().Sugar()
+
 type config struct {
 	port int
 	env  string
@@ -37,30 +39,24 @@ func (app *application) serve() error {
 		WriteTimeout:      5 * time.Second,
 	}
 
+	// start serving
 	return srv.ListenAndServe()
 }
 
 func main() {
 	// initialize zap logger
-	loggerInit, _ := zap.NewProduction()
 	defer func() {
-		err := loggerInit.Sync()
+		err := logger.Sync()
 		if err != nil {
 			log.Fatal("failed to initialize zap logger: ", err)
 		}
 	}()
-	logger := loggerInit.Sugar()
 
 	// parse env variable `port`
 	port, err := strconv.Atoi(os.Getenv("PORT"))
 	if err != nil {
-		logger.Fatal("failed to get port from env vars: ", zap.Error(err))
-	}
-
-	// parse env variable `timeout`
-	timeout, err := strconv.Atoi(os.Getenv("TIMEOUT"))
-	if err != nil {
-		logger.Fatal("failed to get port from env vars: ", zap.Error(err))
+		logger.Error("failed to get port from env vars: ", zap.Error(err))
+		return
 	}
 
 	// setup application config
@@ -74,12 +70,13 @@ func main() {
 		config:  cfg,
 		logger:  logger,
 		version: version,
-		timeout: timeout,
 	}
 
 	// serve application
+	app.logger.Info("starting server in ", app.config.env, " mode on port ", app.config.port)
 	if err := app.serve(); err != nil {
-		app.logger.Fatal("unable to start the application: ", err)
+		app.logger.Error("unable to start the application: ", err)
+		return
 	}
 
 }

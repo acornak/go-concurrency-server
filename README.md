@@ -2,11 +2,13 @@
 
 ## How to run it?
 
-`make start TIMEOUT={your timeout as integer}`
+`make start`
 
 OR
 
-`make restart TIMEOUT={your timeout as integer}`
+`make restart`
+
+By default, server will run locally on `http://127.0.0.1:4001/`. Only one endpoint is defined: `/v1/api/smart`.
 
 ## Pre-commit
 

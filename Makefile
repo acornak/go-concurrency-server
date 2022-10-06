@@ -12,7 +12,7 @@ build:
 ## building and running binaries
 run: build
 	@echo "Starting..."
-	@env PORT=${PORT} ENV=${ENV} EXPONEA_URL=${EXPONEA_URL} TIMEOUT=$(TIMEOUT) ./${BINARY_NAME} &
+	@env PORT=${PORT} ENV=${ENV} EXPONEA_URL=${EXPONEA_URL} ./${BINARY_NAME} &
 	@echo "Started!"
 
 ## clean: runs go clean and deletes binaries
