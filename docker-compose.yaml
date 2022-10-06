@@ -1,0 +1,15 @@
+version: '3.9'
+services:
+  app:
+    container_name: go-concurrency-server
+    environment:
+      - PORT=${PORT}
+      - ENV=${ENV}
+      - EXPONEA_URL=${EXPONEA_URL}
+    tty: true
+    build: .
+    ports:
+      - ${PORT}:${PORT}
+    restart: on-failure
+    volumes:
+      - .:/app

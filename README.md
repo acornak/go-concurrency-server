@@ -8,6 +8,8 @@ OR
 
 `make restart`
 
+Docker must be running!
+
 By default, server will run locally on `http://127.0.0.1:4001/`. Only one endpoint is defined: `/v1/api/smart`.
 
 ## Pre-commit

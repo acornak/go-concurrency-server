@@ -1,26 +1,16 @@
-PORT=4001
-ENV=develop
-EXPONEA_URL="https://exponea-engineering-assignment.appspot.com/api/work"
-BINARY_NAME=go-concurrency-server
+CONTAINER=go-concurrency-server
 
-## building binaries
+## build docker image
 build:
 	@echo "Building..."
-	env CGO_ENABLED=0  go build -ldflags="-s -w" -o ${BINARY_NAME} ./cmd/api
+	docker compose build
 	@echo "Built!"
 
-## building and running binaries
+## running docker container
 run: build
 	@echo "Starting..."
-	@env PORT=${PORT} ENV=${ENV} EXPONEA_URL=${EXPONEA_URL} ./${BINARY_NAME} &
+	@docker compose up &
 	@echo "Started!"
-
-## clean: runs go clean and deletes binaries
-clean:
-	@echo "Cleaning..."
-	@go clean
-	@rm ${BINARY_NAME}
-	@echo "Cleaned!"
 
 ## start: an alias to run
 start: run
@@ -28,12 +18,8 @@ start: run
 ## stop: stops the running application
 stop:
 	@echo "Stopping..."
-	@-pkill -SIGTERM -f "./${BINARY_NAME}"
+	@docker kill $(CONTAINER)
 	@echo "Stopped!"
 
 ## restart: stops and starts the application
 restart: stop start
-
-## test: runs all tests
-test:
-	go test -v ./...
