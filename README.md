@@ -1,1 +1,1 @@
-# go-concurrency-server
+# Example Go server with concurrency
