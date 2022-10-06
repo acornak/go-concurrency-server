@@ -17,6 +17,7 @@ func (app *application) routes() http.Handler {
 		Methods(http.MethodGet).
 		Queries("timeout", "{timeout:[0-9]+}")
 
+	// serve
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", app.config.port), r); err != nil {
 		app.logger.Error("failed to serve http: ", zap.Error(err))
 	}

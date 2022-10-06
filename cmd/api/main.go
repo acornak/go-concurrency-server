@@ -5,7 +5,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 	"time"
 
 	"go.uber.org/zap"
@@ -13,7 +15,7 @@ import (
 
 const version = "1.0.0"
 
-var logger = zap.NewExample().Sugar()
+var logger *zap.SugaredLogger
 
 type config struct {
 	port int
@@ -25,6 +27,10 @@ type application struct {
 	logger  *zap.SugaredLogger
 	version string
 	timeout int
+}
+
+func init() {
+	logger = zap.NewExample().Sugar()
 }
 
 // serving application
@@ -74,9 +80,16 @@ func main() {
 
 	// serve application
 	app.logger.Info("starting server in ", app.config.env, " mode on port ", app.config.port)
-	if err := app.serve(); err != nil {
-		app.logger.Error("unable to start the application: ", err)
-		return
-	}
 
+	// run serving in another thread (for testing purposes)
+	quit := make(chan os.Signal, 1)
+	go func() {
+		if err := app.serve(); err != nil {
+			app.logger.Error("unable to start the application: ", err)
+			return
+		}
+	}()
+
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
 }
