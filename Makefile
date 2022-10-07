@@ -18,7 +18,7 @@ start: run
 ## stop: stops the running application
 stop:
 	@echo "Stopping..."
-	@docker kill $(CONTAINER)
+	@docker stop $(CONTAINER) || true && docker rm ${CONTAINER} || true
 	@echo "Stopped!"
 
 ## restart: stops and starts the application

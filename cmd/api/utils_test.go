@@ -28,3 +28,13 @@ func Test_DifferentSlicesSameLength(t *testing.T) {
 		t.Error("slices should be different")
 	}
 }
+
+// TODO: test wrapper json
+func Test_WrapperJson(t *testing.T) {
+
+}
+
+// TODO: test error json
+func Test_ErrorJson(t *testing.T) {
+
+}

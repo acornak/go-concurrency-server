@@ -85,7 +85,7 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	go func() {
 		if err := app.serve(); err != nil {
-			app.logger.Error("unable to start the application: ", err)
+			app.logger.Error("unable to start the application: ", zap.Error(err))
 			return
 		}
 	}()
