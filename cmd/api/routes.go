@@ -13,7 +13,9 @@ func (app *application) routes() (r *mux.Router) {
 	// routes
 	r.HandleFunc("/v1/api/smart", app.SmartHandler).
 		Methods(http.MethodGet).
-		Queries("timeout", "{timeout:[0-9]+}")
+		// alternative to handle numeric values only in the routes level:
+		// Queries("timeout", "{timeout:[0-9]+}")
+		Queries("timeout", "{timeout}")
 
 	return
 }

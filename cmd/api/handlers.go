@@ -19,7 +19,6 @@ func (app *application) SmartHandler(w http.ResponseWriter, r *http.Request) {
 	timeoutParam := mux.Vars(r)["timeout"]
 
 	// check type of timeout param
-	// this is already handled in routes as this endpoint accepts only numeric values for timeout param
 	timeout, err := strconv.Atoi(timeoutParam)
 	if err != nil {
 		app.logger.Error("invalid timeout param: ", zap.Error(err))
