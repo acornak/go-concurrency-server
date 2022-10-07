@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -11,13 +12,6 @@ import (
 type route struct {
 	path    string
 	methods []string
-}
-
-var routes = []route{
-	{
-		path:    "/v1/api/smart",
-		methods: []string{"GET"},
-	},
 }
 
 var testApp application
@@ -37,49 +31,88 @@ func init() {
 	}
 }
 
-func routeExists(t *testing.T, r *mux.Router, routeToCheck string, methodToCheck []string) {
-	found := false
+func routeExists(t *testing.T, r *mux.Router, routeToCheck string, methodToCheck []string) (found bool, err error) {
+	found = false
 
-	err := r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+	err = r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 		tpl, err := route.GetPathTemplate()
 		if err != nil {
-			t.Error("failed to get path from route ", routeToCheck, ": ", err)
 			return err
 		}
 
 		if tpl != routeToCheck {
-			t.Errorf("routes don't match. Expected: %s, got: %s", routeToCheck, tpl)
 			return err
 		}
 
 		mtd, err := route.GetMethods()
 		if err != nil {
-			t.Error("failed to get method of route ", routeToCheck, ": ", err)
 			return err
 		}
 
 		if !compareSlices(methodToCheck, mtd) {
-			t.Errorf("methods don't match. Expected: %s, got %s", methodToCheck, mtd)
-			return err
+			return errors.New("methods do not match")
 		}
 
 		found = true
 		return nil
 	})
 
-	if err != nil {
-		t.Error("test failed: ", err)
+	return
+}
+
+func Test_RouteExist(t *testing.T) {
+	testRoutes := testApp.routes()
+	routes := []route{
+		{
+			path:    "/v1/api/smart",
+			methods: []string{"GET"},
+		},
 	}
 
-	if !found {
-		t.Errorf("did not find %s in registered routes", routeToCheck)
+	for _, rt := range routes {
+		exists, err := routeExists(t, testRoutes, rt.path, rt.methods)
+		if err != nil {
+			t.Errorf("test failed: %v", err)
+		}
+		if !exists {
+			t.Errorf("did not find %s in registered routes", rt.path)
+		}
 	}
 }
 
-func Test_Routes_Exist(t *testing.T) {
+func Test_RouteDoesNotExist(t *testing.T) {
 	testRoutes := testApp.routes()
+	routes := []route{
+		{
+			path:    "/non/existing/route",
+			methods: []string{"GET"},
+		},
+	}
 
 	for _, rt := range routes {
-		routeExists(t, testRoutes, rt.path, rt.methods)
+		exists, err := routeExists(t, testRoutes, rt.path, rt.methods)
+		if err != nil {
+			t.Errorf("test failed: %v", err)
+		}
+		if exists {
+			t.Errorf("should not have found %s in registered routes", rt.path)
+		}
+	}
+}
+
+func Test_MethodDoesNotExist(t *testing.T) {
+	testRoutes := testApp.routes()
+	routes := []route{
+		{
+			path:    "/v1/api/smart",
+			methods: []string{"GET", "POST"},
+		},
+	}
+
+	for _, rt := range routes {
+		_, err := routeExists(t, testRoutes, rt.path, rt.methods)
+		if err == nil {
+			t.Error("test failed: methods should not be found")
+		}
 	}
 }
