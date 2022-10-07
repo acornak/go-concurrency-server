@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -12,7 +13,7 @@ import (
 )
 
 func (app *application) SmartHandler(w http.ResponseWriter, r *http.Request) {
-	var resp map[string]string
+	var out map[string]string
 
 	start := time.Now()
 
@@ -30,14 +31,25 @@ func (app *application) SmartHandler(w http.ResponseWriter, r *http.Request) {
 	app.timeout = timeout
 
 	// TODO: add logic
+	resp, err := app.SendConcurrentRequests()
+	if err != nil {
+		app.logger.Error("failed to send HTTP request: ", zap.Error(err))
+		app.errorJson(w, errors.New("failed to send HTTP request"))
+		return
+	}
+
+	// check performance
+	end := time.Since(start).Milliseconds()
 
 	// setup response
-	resp = map[string]string{
-		"timeout": fmt.Sprintf("%d", timeout),
+	out = map[string]string{
+		"timeout":             fmt.Sprintf("%d ms", timeout),
+		"request_performance": fmt.Sprintf("%d ms", end),
+		"server_response":     resp,
 	}
 
 	// write response
-	if err = app.writeJson(w, http.StatusOK, resp, ""); err != nil {
+	if err = app.writeJson(w, http.StatusOK, out, ""); err != nil {
 		app.logger.Error("failed to marshal json: ", zap.Error(err))
 		app.errorJson(w, errors.New("failed to marshal json"))
 		return
@@ -45,6 +57,24 @@ func (app *application) SmartHandler(w http.ResponseWriter, r *http.Request) {
 
 	// log endpoint performance internally
 	// TODO: create logs database for further performance analysis
-	end := time.Since(start).Milliseconds()
+
 	app.logger.Info("request performance: ", end, " ms.")
+}
+
+func (app *application) SendConcurrentRequests() (resp string, err error) {
+	resp, statusCode, err := sendGetRequest(os.Getenv("EXPONEA_URL"))
+	if err != nil {
+		app.logger.Error("failed to send HTTP request: ", zap.Error(err))
+		return
+	}
+
+	if statusCode != http.StatusOK {
+		// TODO: error chan
+		return "", errors.New("server responded with non-OK status")
+	} else {
+		// TODO: success chan
+		app.logger.Info("server response: ", resp)
+	}
+
+	return
 }

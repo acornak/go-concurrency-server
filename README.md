@@ -23,3 +23,7 @@ By default, server will run locally on `http://127.0.0.1:4001/`. Only one endpoi
 You need to install following dependencies manually:
 
 - golangci-lint https://golangci-lint.run/usage/install/#local-installation
+
+## Performance testing
+
+Run script `performance_test.sh`.

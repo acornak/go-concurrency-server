@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"net/http"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -65,7 +66,7 @@ func Test_RouteExist(t *testing.T) {
 	routes := []route{
 		{
 			path:    "/v1/api/smart",
-			methods: []string{"GET"},
+			methods: []string{http.MethodGet},
 		},
 	}
 
@@ -85,7 +86,7 @@ func Test_RouteDoesNotExist(t *testing.T) {
 	routes := []route{
 		{
 			path:    "/non/existing/route",
-			methods: []string{"GET"},
+			methods: []string{http.MethodGet},
 		},
 	}
 
@@ -105,7 +106,7 @@ func Test_MethodDoesNotExist(t *testing.T) {
 	routes := []route{
 		{
 			path:    "/v1/api/smart",
-			methods: []string{"GET", "POST"},
+			methods: []string{http.MethodGet, http.MethodPost},
 		},
 	}
 

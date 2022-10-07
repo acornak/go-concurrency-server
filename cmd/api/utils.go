@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -12,33 +13,6 @@ const (
 	// handle differences between envs
 	develop = "develop"
 )
-
-// checks if slice a contains string b
-func sliceContains(a []string, b string) bool {
-	for _, v := range a {
-		if v == b {
-			return true
-		}
-	}
-	return false
-}
-
-// compare if each element of slice a is present in slice b
-func compareSlices(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-
-	// this works just fine for smaller slices
-	// otherwise this would require different solution due to the overhead
-	for _, j := range a {
-		if !sliceContains(b, j) {
-			return false
-		}
-	}
-
-	return true
-}
 
 // writes successful JSON message
 func (app *application) writeJson(w http.ResponseWriter, status int, data interface{}, wrap string) error {
@@ -80,4 +54,48 @@ func (app *application) errorJson(w http.ResponseWriter, err error, status ...in
 	if err := app.writeJson(w, statusCode, errMessage, "error"); err != nil {
 		app.logger.Error("failed to write response: ", zap.Error(err))
 	}
+}
+
+// sends requests based on url, method and payload, returns response and error
+func sendGetRequest(url string) (string, int, error) {
+	r, err := http.Get(url)
+	if err != nil {
+		return "", 0, err
+	}
+
+	defer r.Body.Close()
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return "", 0, err
+	}
+
+	return string(body), r.StatusCode, nil
+}
+
+// checks if slice a contains string b
+func sliceContains(a []string, b string) bool {
+	for _, v := range a {
+		if v == b {
+			return true
+		}
+	}
+	return false
+}
+
+// compare if each element of slice a is present in slice b
+func compareSlices(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	// this works just fine for smaller slices
+	// otherwise this would require different solution due to the overhead
+	for _, j := range a {
+		if !sliceContains(b, j) {
+			return false
+		}
+	}
+
+	return true
 }
