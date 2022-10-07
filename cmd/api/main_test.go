@@ -33,7 +33,7 @@ func Test_InvalidPort(t *testing.T) {
 func Test_WorkingMainFunc(t *testing.T) {
 	// set env vars
 	port := "4001"
-	env := "develop"
+	env := develop
 
 	os.Setenv("PORT", port)
 	defer os.Unsetenv("PORT")
@@ -61,6 +61,5 @@ func Test_WorkingMainFunc(t *testing.T) {
 	}
 
 	// assert logs
-	require.Equal(t, 1, observedLogs.Len())
 	assert.Equal(t, fmt.Sprintf("starting server in %s mode on port %s", env, port), observedLogs.All()[0].Message)
 }
