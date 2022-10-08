@@ -26,7 +26,6 @@ type application struct {
 	config  config
 	logger  *zap.SugaredLogger
 	version string
-	timeout int
 }
 
 func init() {

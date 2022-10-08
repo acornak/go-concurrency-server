@@ -28,7 +28,6 @@ func init() {
 		},
 		logger:  logger,
 		version: version,
-		timeout: 300,
 	}
 }
 

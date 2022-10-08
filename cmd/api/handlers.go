@@ -12,10 +12,34 @@ import (
 	"go.uber.org/zap"
 )
 
-func (app *application) SmartHandler(w http.ResponseWriter, r *http.Request) {
-	var out map[string]string
+type failChanStruct struct {
+	status  int
+	message string
+}
 
+type SmartResponseMessage struct {
+	Result      string `json:"result"`
+	Performance string `json:"performance"`
+	Timeout     string `json:"timeout"`
+}
+
+type SmartResponse struct {
+	Status  int                  `json:"status"`
+	Message SmartResponseMessage `json:"message"`
+}
+
+type requestSender func(url string) (string, int, error)
+
+// handle `/v1/api/smart` endpoint
+func (app *application) SmartHandler(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
+
+	out := &SmartResponse{}
+	status := http.StatusOK
+
+	successChan := make(chan string)
+	failChan := make(chan failChanStruct)
+	doneChan := make(chan bool, 1)
 
 	timeoutParam := mux.Vars(r)["timeout"]
 
@@ -27,54 +51,80 @@ func (app *application) SmartHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// set timeout
-	app.timeout = timeout
+	out.Message.Timeout = fmt.Sprintf("%d ms", timeout)
 
-	// TODO: add logic
-	resp, err := app.SendConcurrentRequests()
-	if err != nil {
-		app.logger.Error("failed to send HTTP request: ", zap.Error(err))
-		app.errorJson(w, errors.New("failed to send HTTP request"))
-		return
-	}
+	// try first response
+	go app.handleGetRequest(successChan, failChan, sendGetRequest)
+
+	// handle response
+	go func() {
+		for {
+			select {
+			// check if request was successful
+			case out.Message.Result = <-successChan:
+				doneChan <- true
+				close(successChan)
+				return
+			// check if request was not successful
+			case resp := <-failChan:
+				doneChan <- true
+				status = resp.status
+				out.Message.Result = resp.message
+				close(failChan)
+				return
+			// check if server responded within specified timeout
+			case <-time.After(time.Duration(timeout) * time.Millisecond):
+				status = http.StatusGatewayTimeout
+				out.Message.Result = "server did not respond within specified timeout"
+				doneChan <- true
+				return
+			// check if server responded within 300 ms
+			case <-time.After(300 * time.Millisecond):
+				app.logger.Info("server did not respond within 300 ms")
+				status = http.StatusGatewayTimeout
+				out.Message.Result = "server did not respond within 300 ms"
+				doneChan <- true
+				return
+			}
+		}
+	}()
+
+	<-doneChan
+	close(doneChan)
 
 	// check performance
 	end := time.Since(start).Milliseconds()
-
-	// setup response
-	out = map[string]string{
-		"timeout":             fmt.Sprintf("%d ms", timeout),
-		"request_performance": fmt.Sprintf("%d ms", end),
-		"server_response":     resp,
-	}
+	out.Status = status
+	out.Message.Performance = fmt.Sprintf("%d ms", end)
 
 	// write response
-	if err = app.writeJson(w, http.StatusOK, out, ""); err != nil {
+	if err = app.writeJson(w, status, out, ""); err != nil {
 		app.logger.Error("failed to marshal json: ", zap.Error(err))
 		app.errorJson(w, errors.New("failed to marshal json"))
 		return
 	}
 
+	// POTENTIAL PRODUCTION TODOS:
 	// log endpoint performance internally
-	// TODO: create logs database for further performance analysis
+	// create logs database for further performance analysis
 
 	app.logger.Info("request performance: ", end, " ms.")
 }
 
-func (app *application) SendConcurrentRequests() (resp string, err error) {
-	resp, statusCode, err := sendGetRequest(os.Getenv("EXPONEA_URL"))
+func (app *application) handleGetRequest(successChan chan string, failChan chan failChanStruct, getReq requestSender) {
+	resp, statusCode, err := getReq(os.Getenv("EXPONEA_URL"))
 	if err != nil {
 		app.logger.Error("failed to send HTTP request: ", zap.Error(err))
 		return
 	}
+	app.logger.Infof("server status code: %d response: %s", statusCode, resp)
 
-	if statusCode != http.StatusOK {
-		// TODO: error chan
-		return "", errors.New("server responded with non-OK status")
+	if statusCode == http.StatusOK {
+		successChan <- resp
 	} else {
-		// TODO: success chan
-		app.logger.Info("server response: ", resp)
+		failChan <- failChanStruct{
+			status:  statusCode,
+			message: resp,
+		}
 	}
-
-	return
 }
