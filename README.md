@@ -10,7 +10,7 @@ OR
 
 Docker must be running!
 
-By default, server will run locally on `http://127.0.0.1:4001/`. Only one endpoint is defined: `/v1/api/smart` with query param `timeout` that accepts only numberic values.
+By default, server will run locally on `http://127.0.0.1:4001/`. Only one endpoint is defined: `/v1/api/smart` with query param `timeout` that accepts only numeric values.
 
 ## Pre-commit
 
