@@ -1,5 +1,9 @@
 # Example Go server with concurrency
 
+## What does it do?
+
+After calling endpoint `/v1/api/smart` with `timeout` parameter, server will make GET request to URL defined in environment variables (`.env`). **(TBD)** If server will not respond within 300 milliseconds, another 2 requests are fired concurrently. Endpoint will return the first successful response (including the first one). If there is no successful response, endpoint will return error. If there is no response from any of requests, endpoint will return error.
+
 ## How to run it?
 
 `make start`
@@ -10,7 +14,7 @@ OR
 
 Docker must be running!
 
-By default, server will run locally on `http://127.0.0.1:4001/`. Only one endpoint is defined: `/v1/api/smart` with query param `timeout` that accepts only numeric values.
+By default, server will run locally on `http://127.0.0.1:4001/`. Only one endpoint is defined: `/v1/api/smart` with query param `timeout`. Timeout can only be numeric value, otherwise `BAD REQUEST` is returned.
 
 ## Pre-commit
 
