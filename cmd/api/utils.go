@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
+	"time"
 
 	"go.uber.org/zap"
 )
@@ -57,20 +59,27 @@ func (app *application) errorJson(w http.ResponseWriter, err error, status ...in
 }
 
 // sends requests based on url, method and payload, returns response and error
-func sendGetRequest(url string) (string, int, error) {
-	r, err := http.Get(url)
+func sendGetRequest(url string, timeout int) (string, int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Millisecond)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return "", 0, err
 	}
 
-	defer r.Body.Close()
-
-	body, err := io.ReadAll(r.Body)
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", 0, err
 	}
 
-	return string(body), r.StatusCode, nil
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return "", 0, err
+	}
+
+	return string(body), res.StatusCode, nil
 }
 
 // checks if slice a contains string b

@@ -31,7 +31,7 @@ func Test_SmartHandlerError(t *testing.T) {
 
 	testApp.logger = logger
 
-	testApp.handleGetRequest(testSuccessChan, testFailChan, func(url string) (string, int, error) {
+	testApp.handleGetRequest(testSuccessChan, testFailChan, 1000, func(url string, timeout int) (string, int, error) {
 		return "", 0, errors.New("testing error")
 	})
 
@@ -54,7 +54,7 @@ func Test_SmartHandlerFail(t *testing.T) {
 
 	testApp.logger = logger
 
-	go testApp.handleGetRequest(testSuccessChan, testFailChan, func(url string) (string, int, error) {
+	go testApp.handleGetRequest(testSuccessChan, testFailChan, 1000, func(url string, timeout int) (string, int, error) {
 		return testMessage, http.StatusGatewayTimeout, nil
 	})
 
@@ -83,7 +83,7 @@ func Test_SmartHandlerSuccess(t *testing.T) {
 
 	testApp.logger = logger
 
-	go testApp.handleGetRequest(testSuccessChan, testFailChan, func(url string) (string, int, error) {
+	go testApp.handleGetRequest(testSuccessChan, testFailChan, 1000, func(url string, timeout int) (string, int, error) {
 		return testMessage, http.StatusOK, nil
 	})
 

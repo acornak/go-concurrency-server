@@ -28,7 +28,7 @@ type SmartResponse struct {
 	Message SmartResponseMessage `json:"message"`
 }
 
-type requestSender func(url string) (string, int, error)
+type requestSender func(url string, timeout int) (string, int, error)
 
 // handle `/v1/api/smart` endpoint
 func (app *application) SmartHandler(w http.ResponseWriter, r *http.Request) {
@@ -54,7 +54,7 @@ func (app *application) SmartHandler(w http.ResponseWriter, r *http.Request) {
 	out.Message.Timeout = fmt.Sprintf("%d ms", timeout)
 
 	// try first response
-	go app.handleGetRequest(successChan, failChan, sendGetRequest)
+	go app.handleGetRequest(successChan, failChan, timeout, sendGetRequest)
 
 	// handle response
 	go func() {
@@ -111,8 +111,8 @@ func (app *application) SmartHandler(w http.ResponseWriter, r *http.Request) {
 	app.logger.Info("request performance: ", end, " ms.")
 }
 
-func (app *application) handleGetRequest(successChan chan string, failChan chan failChanStruct, getReq requestSender) {
-	resp, statusCode, err := getReq(os.Getenv("EXPONEA_URL"))
+func (app *application) handleGetRequest(successChan chan string, failChan chan failChanStruct, timeout int, getReq requestSender) {
+	resp, statusCode, err := getReq(os.Getenv("EXPONEA_URL"), timeout)
 	if err != nil {
 		app.logger.Error("failed to send HTTP request: ", zap.Error(err))
 		return
