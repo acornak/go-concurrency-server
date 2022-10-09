@@ -30,4 +30,4 @@ You need to install following dependencies manually:
 
 ## Performance testing
 
-Run `make tests` - this command will create a batch of 10 \* 100 concurrent request (1.000 in total). At the end, you will see the performance.
+Run `make test` - this command will create a batch of 10 \* 100 concurrent request (1.000 in total). At the end, you will see the performance.
