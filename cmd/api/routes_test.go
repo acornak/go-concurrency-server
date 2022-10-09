@@ -23,7 +23,7 @@ func init() {
 
 	testApp = application{
 		config: config{
-			port: 1234,
+			port: 4001,
 			env:  develop,
 		},
 		logger:  logger,

@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,16 +17,16 @@ import (
 func init() {
 	testApp = application{
 		config: config{
-			port: 1234,
+			port: 4001,
 			env:  develop,
 		},
 		version: version,
 	}
 }
 
-func Test_SmartHandlerError(t *testing.T) {
+func Test_HandleGetRequestError(t *testing.T) {
 	testSuccessChan := make(chan string)
-	testFailChan := make(chan failChanStruct)
+	testFailChan := make(chan bool)
 
 	observedZapCore, observedLogs := observer.New(zap.InfoLevel)
 	logger = zap.New(observedZapCore).Sugar()
@@ -44,9 +46,9 @@ func Test_SmartHandlerError(t *testing.T) {
 	close(testFailChan)
 }
 
-func Test_SmartHandlerFail(t *testing.T) {
+func Test_HandleGetRequestFail(t *testing.T) {
 	testSuccessChan := make(chan string)
-	testFailChan := make(chan failChanStruct)
+	testFailChan := make(chan bool)
 	testMessage := "request failed"
 
 	observedZapCore, observedLogs := observer.New(zap.InfoLevel)
@@ -64,18 +66,15 @@ func Test_SmartHandlerFail(t *testing.T) {
 	require.Equal(t, 1, observedLogs.Len())
 	assert.Equal(t, fmt.Sprintf("server status code: %d response: %s", http.StatusGatewayTimeout, testMessage), observedLogs.All()[0].Message)
 	assert.Equal(t, 0, len(testSuccessChan))
-	assert.Equal(t, failChanStruct{
-		status:  http.StatusGatewayTimeout,
-		message: "request failed",
-	}, resp)
+	assert.Equal(t, true, resp)
 
 	close(testSuccessChan)
 	close(testFailChan)
 }
 
-func Test_SmartHandlerSuccess(t *testing.T) {
+func Test_HandleGetRequestSuccess(t *testing.T) {
 	testSuccessChan := make(chan string)
-	testFailChan := make(chan failChanStruct)
+	testFailChan := make(chan bool)
 	testMessage := "request successful"
 
 	observedZapCore, observedLogs := observer.New(zap.InfoLevel)
@@ -97,4 +96,23 @@ func Test_SmartHandlerSuccess(t *testing.T) {
 
 	close(testSuccessChan)
 	close(testFailChan)
+}
+
+func Test_SmartHandlerInvalidTimeout(t *testing.T) {
+	r, err := http.NewRequest("GET", "/v1/api/smart", nil)
+	if err != nil {
+		t.Error("unable to create new request: ", err)
+	}
+	q := url.Values{}
+	q.Add("timeout", "abcd")
+	r.URL.RawQuery = q.Encode()
+
+	w := httptest.NewRecorder()
+
+	testApp.SmartHandler(w, r)
+
+	expectedResponse := "{\"error\":{\"message\":\"invalid timeout parameter: accepts only numbers\"}}"
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, []byte(expectedResponse), w.Body.Bytes())
 }

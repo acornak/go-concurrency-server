@@ -7,6 +7,7 @@ services:
       - ENV=${ENV}
       - EXPONEA_URL=${EXPONEA_URL}
     tty: true
+    image: concurrency-server:go
     build: .
     ports:
       - ${PORT}:${PORT}

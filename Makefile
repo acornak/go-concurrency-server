@@ -23,3 +23,7 @@ stop:
 
 ## restart: stops and starts the application
 restart: stop start
+
+## test: performance testing
+test:
+	@time bash performance_test.sh

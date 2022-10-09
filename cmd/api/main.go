@@ -33,15 +33,15 @@ func init() {
 }
 
 // serving application
-func (app *application) serve() error {
+func (app *application) serve(routes http.Handler) error {
 	// initialize http server
 	srv := &http.Server{
 		Addr:              fmt.Sprintf(":%d", app.config.port),
-		Handler:           app.routes(),
-		IdleTimeout:       30 * time.Second,
-		ReadTimeout:       10 * time.Second,
-		ReadHeaderTimeout: 5 * time.Second,
-		WriteTimeout:      5 * time.Second,
+		Handler:           routes,
+		IdleTimeout:       60 * time.Second,
+		ReadTimeout:       60 * time.Second,
+		ReadHeaderTimeout: 20 * time.Second,
+		WriteTimeout:      20 * time.Second,
 	}
 
 	// start serving
@@ -83,12 +83,12 @@ func main() {
 	// run serving in another thread (for testing purposes)
 	quit := make(chan os.Signal, 1)
 	go func() {
-		if err := app.serve(); err != nil {
+		if err := app.serve(app.routes()); err != nil {
 			app.logger.Error("unable to start the application: ", zap.Error(err))
 			return
 		}
 	}()
 
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGSEGV)
 	<-quit
 }

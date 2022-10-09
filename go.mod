@@ -3,6 +3,7 @@ module github.com/acornak/go-concurrency-server
 go 1.18
 
 require (
+	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/stretchr/testify v1.8.0
 	go.uber.org/zap v1.23.0
