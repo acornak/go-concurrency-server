@@ -57,7 +57,6 @@ func (app *application) SmartHandler(w http.ResponseWriter, r *http.Request) {
 	out.Message.Timeout = fmt.Sprintf("%d ms", timeoutUser)
 
 	// try first request
-	// TODO: add this to a separate func
 	go app.handleGetRequest(successChan, failChan, timeoutUser, sendGetRequest)
 
 	go func() {
