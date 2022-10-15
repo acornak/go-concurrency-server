@@ -17,7 +17,7 @@ RUN go mod download
 COPY cmd ./cmd
 
 # compile app
-RUN go build -ldflags="-s -w" -o /server ./cmd/api
+RUN GODEBUG=gctrace=1 go build -ldflags="-s -w" -o /server ./cmd/api
 
 # expose port
 EXPOSE 8080

@@ -35,10 +35,10 @@ func (app *application) SmartHandler(w http.ResponseWriter, r *http.Request) {
 	out := &SmartResponse{}
 	status := http.StatusOK
 
-	successChan := make(chan string)
+	successChan := make(chan string, 3)
 	failChan := make(chan bool, 1)
 	failChanInternal := make(chan bool, 3)
-	doneChan := make(chan bool)
+	doneChan := make(chan bool, 1)
 	concurChan := make(chan bool, 1)
 
 	timeoutReq := 300
@@ -66,6 +66,7 @@ func (app *application) SmartHandler(w http.ResponseWriter, r *http.Request) {
 			case out.Message.Result = <-successChan:
 				app.logger.Info("request response OK! requestID: ", reqID)
 				doneChan <- true
+				return
 			// check if all requests were not successful
 			case v := <-failChan:
 				failChanInternal <- v
@@ -74,6 +75,7 @@ func (app *application) SmartHandler(w http.ResponseWriter, r *http.Request) {
 					status = http.StatusBadGateway
 					out.Message.Result = "all 3 requests failed"
 					doneChan <- true
+					return
 				}
 			// check if server responded within 300 ms
 			case <-timeoutReqTimer:
@@ -91,6 +93,7 @@ func (app *application) SmartHandler(w http.ResponseWriter, r *http.Request) {
 	select {
 	// check if requests are done successfully
 	case <-doneChan:
+		close(doneChan)
 	// check if server did not respond within specified timeout
 	case <-time.After(time.Duration(timeoutUser) * time.Millisecond):
 		app.logger.Info("server did not respond within specified timeout. requestID: ", reqID)
